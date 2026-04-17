@@ -72,47 +72,19 @@ class timeout:
 
     @property
     def expired(self) -> bool:
-        return self._cancelled
+        pass
 
     @property
     def remaining(self) -> Optional[float]:
-        if self._cancel_at is not None:
-            return max(self._cancel_at - self._loop.time(), 0.0)
-        else:
-            return None
+        pass
 
     def _do_enter(self) -> "timeout":
         # Support Tornado 5- without timeout
         # Details: https://github.com/python/asyncio/issues/392
-        if self._timeout is None:
-            return self
-
-        self._task = asyncio.current_task(self._loop)
-        if self._task is None:
-            raise RuntimeError(
-                "Timeout context manager should be used " "inside a task"
-            )
-
-        if self._timeout <= 0:
-            self._loop.call_soon(self._cancel_task)
-            return self
-
-        self._cancel_at = self._loop.time() + self._timeout
-        self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
-        return self
+        pass
 
     def _do_exit(self, exc_type: Type[BaseException]) -> None:
-        if exc_type is asyncio.CancelledError and self._cancelled:
-            self._cancel_handler = None
-            self._task = None
-            raise asyncio.TimeoutError
-        if self._timeout is not None and self._cancel_handler is not None:
-            self._cancel_handler.cancel()
-            self._cancel_handler = None
-        self._task = None
-        return None
+        pass
 
     def _cancel_task(self) -> None:
-        if self._task is not None:
-            self._task.cancel()
-            self._cancelled = True
+        pass

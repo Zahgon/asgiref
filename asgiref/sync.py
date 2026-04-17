@@ -44,13 +44,7 @@ _R = TypeVar("_R")
 def _restore_context(context: contextvars.Context) -> None:
     # Check for changes in contextvars, and set them to the current
     # context for downstream consumers
-    for cvar in context:
-        cvalue = context.get(cvar)
-        try:
-            if cvar.get() != cvalue:
-                cvar.set(cvalue)
-        except LookupError:
-            cvar.set(cvalue)
+    pass
 
 
 # Python 3.12 deprecates asyncio.iscoroutinefunction() as an alias for
@@ -65,8 +59,7 @@ else:
     iscoroutinefunction = asyncio.iscoroutinefunction  # type: ignore[assignment]
 
     def markcoroutinefunction(func: _F) -> _F:
-        func._is_coroutine = asyncio.coroutines._is_coroutine  # type: ignore
-        return func
+        pass
 
 
 class AsyncSingleThreadContext:
@@ -271,12 +264,7 @@ class AsyncToSync(Generic[_P, _R]):
             )
 
             async def new_loop_wrap() -> None:
-                loop = asyncio.get_running_loop()
-                self.loop_thread_executors[loop] = current_executor
-                try:
-                    await awaitable
-                finally:
-                    del self.loop_thread_executors[loop]
+                pass
 
             if self.main_event_loop is not None:
                 try:
@@ -343,34 +331,7 @@ class AsyncToSync(Generic[_P, _R]):
         Wraps the awaitable with something that puts the result into the
         result/exception future.
         """
-
-        __traceback_hide__ = True  # noqa: F841
-
-        if context is not None:
-            _restore_context(context[0])
-
-        current_task = asyncio.current_task()
-        if current_task is not None and task_context is not None:
-            task_context.append(current_task)
-
-        try:
-            # If we have an exception, run the function inside the except block
-            # after raising it so exc_info is correctly populated.
-            if exc_info[1]:
-                try:
-                    raise exc_info[1]
-                except BaseException:
-                    result = await awaitable
-            else:
-                result = await awaitable
-        except BaseException as e:
-            call_result.set_exception(e)
-        else:
-            call_result.set_result(result)
-        finally:
-            if current_task is not None and task_context is not None:
-                task_context.remove(current_task)
-            context[0] = contextvars.copy_context()
+        pass
 
 
 class SyncToAsync(Generic[_P, _R]):
@@ -541,24 +502,7 @@ class SyncToAsync(Generic[_P, _R]):
         """
         Wraps the sync application with exception handling.
         """
-
-        __traceback_hide__ = True  # noqa: F841
-
-        # Set the threadlocal for AsyncToSync
-        self.threadlocal.main_event_loop = loop
-        self.threadlocal.main_event_loop_pid = os.getpid()
-        self.threadlocal.task_context = task_context
-
-        # Run the function
-        # If we have an exception, run the function inside the except block
-        # after raising it so exc_info is correctly populated.
-        if exc_info[1]:
-            try:
-                raise exc_info[1]
-            except BaseException:
-                return func(*args, **kwargs)
-        else:
-            return func(*args, **kwargs)
+        pass
 
 
 @overload
@@ -600,15 +544,7 @@ def async_to_sync(
     ],
     Callable[_P, _R],
 ]:
-    if awaitable is None:
-        return lambda f: AsyncToSync(
-            f,
-            force_new_loop=force_new_loop,
-        )
-    return AsyncToSync(
-        awaitable,
-        force_new_loop=force_new_loop,
-    )
+    pass
 
 
 @overload
@@ -642,16 +578,4 @@ def sync_to_async(
     Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]],
     Callable[_P, Coroutine[Any, Any, _R]],
 ]:
-    if func is None:
-        return lambda f: SyncToAsync(
-            f,
-            thread_sensitive=thread_sensitive,
-            executor=executor,
-            context=context,
-        )
-    return SyncToAsync(
-        func,
-        thread_sensitive=thread_sensitive,
-        executor=executor,
-        context=context,
-    )
+    pass

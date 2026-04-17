@@ -56,28 +56,13 @@ class StatelessServer:
         """
         Runs the asyncio event loop with our handler loop.
         """
-        event_loop = asyncio.get_event_loop()
-        try:
-            event_loop.run_until_complete(self.arun())
-        except KeyboardInterrupt:
-            logger.info("Exiting due to Ctrl-C/interrupt")
+        pass
 
     async def arun(self):
         """
         Runs the asyncio event loop with our handler loop.
         """
-
-        class Done(Exception):
-            pass
-
-        async def handle():
-            await self.handle()
-            raise Done
-
-        try:
-            await asyncio.gather(self.application_checker(), handle())
-        except Done:
-            pass
+        pass
 
     async def handle(self):
         raise NotImplementedError("You must implement handle()")
@@ -94,80 +79,30 @@ class StatelessServer:
         """
         Creates an application instance and returns its queue.
         """
-        if scope_id in self.application_instances:
-            self.application_instances[scope_id]["last_used"] = time.time()
-            return self.application_instances[scope_id]["input_queue"]
-        # See if we need to delete an old one
-        while len(self.application_instances) > self.max_applications:
-            self.delete_oldest_application_instance()
-        # Make an instance of the application
-        input_queue = asyncio.Queue()
-        application_instance = guarantee_single_callable(self.application)
-        # Run it, and stash the future for later checking
-        future = asyncio.ensure_future(
-            application_instance(
-                scope=scope,
-                receive=input_queue.get,
-                send=lambda message: self.application_send(scope, message),
-            ),
-        )
-        self.application_instances[scope_id] = {
-            "input_queue": input_queue,
-            "future": future,
-            "scope": scope,
-            "last_used": time.time(),
-        }
-        return input_queue
+        pass
 
     def delete_oldest_application_instance(self):
         """
         Finds and deletes the oldest application instance
         """
-        oldest_time = min(
-            details["last_used"] for details in self.application_instances.values()
-        )
-        for scope_id, details in self.application_instances.items():
-            if details["last_used"] == oldest_time:
-                self.delete_application_instance(scope_id)
-                # Return to make sure we only delete one in case two have
-                # the same oldest time
-                return
+        pass
 
     def delete_application_instance(self, scope_id):
         """
         Removes an application instance (makes sure its task is stopped,
         then removes it from the current set)
         """
-        details = self.application_instances[scope_id]
-        del self.application_instances[scope_id]
-        if not details["future"].done():
-            details["future"].cancel()
+        pass
 
     async def application_checker(self):
         """
         Goes through the set of current application instance Futures and cleans up
         any that are done/prints exceptions for any that errored.
         """
-        while True:
-            await asyncio.sleep(self.application_checker_interval)
-            for scope_id, details in list(self.application_instances.items()):
-                if details["future"].done():
-                    exception = details["future"].exception()
-                    if exception:
-                        await self.application_exception(exception, details)
-                    try:
-                        del self.application_instances[scope_id]
-                    except KeyError:
-                        # Exception handling might have already got here before us. That's fine.
-                        pass
+        pass
 
     async def application_exception(self, exception, application_details):
         """
         Called whenever an application coroutine has an exception.
         """
-        logging.error(
-            "Exception inside application: %s\n%s%s",
-            exception,
-            "".join(traceback.format_tb(exception.__traceback__)),
-            f"  {exception}",
-        )
+        pass

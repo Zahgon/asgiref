@@ -33,17 +33,7 @@ class _WorkItem:
         self.kwargs = kwargs
 
     def run(self) -> None:
-        __traceback_hide__ = True  # noqa: F841
-        if not self.future.set_running_or_notify_cancel():
-            return
-        try:
-            result = self.fn(*self.args, **self.kwargs)
-        except BaseException as exc:
-            self.future.set_exception(exc)
-            # Break a reference cycle with the exception 'exc'
-            self = None  # type: ignore[assignment]
-        else:
-            self.future.set_result(result)
+        pass
 
 
 class CurrentThreadExecutor(Executor):
@@ -65,30 +55,7 @@ class CurrentThreadExecutor(Executor):
         Runs the code in the work queue until a result is available from the future.
         Should be run from the thread the executor is initialised in.
         """
-        # Check we're in the right thread
-        if threading.current_thread() != self._work_thread:
-            raise RuntimeError(
-                "You cannot run CurrentThreadExecutor from a different thread"
-            )
-
-        def done(future: "Future[Any]") -> None:
-            with self._work_ready:
-                self._broken = True
-                self._work_ready.notify()
-
-        future.add_done_callback(done)
-        # Keep getting and running work items until the future we're waiting for
-        # is done and the queue is empty.
-        while True:
-            with self._work_ready:
-                while not self._work_items and not self._broken:
-                    self._work_ready.wait()
-                if not self._work_items:
-                    break
-                # Get a work item and run it
-                work_item = self._work_items.popleft()
-            work_item.run()
-            del work_item
+        pass
 
     def submit(
         self,
@@ -98,26 +65,4 @@ class CurrentThreadExecutor(Executor):
         **kwargs: _P.kwargs,
     ) -> "Future[_R]":
         # Check they're not submitting from the same thread
-        if threading.current_thread() == self._work_thread:
-            raise RuntimeError(
-                "You cannot submit onto CurrentThreadExecutor from its own thread"
-            )
-        f: "Future[_R]" = Future()
-        work_item = _WorkItem(f, fn, *args, **kwargs)
-
-        # Walk up the CurrentThreadExecutor stack to find the closest one still
-        # running
-        executor = self
-        while True:
-            with executor._work_ready:
-                if not executor._broken:
-                    # Add to work queue
-                    executor._work_items.append(work_item)
-                    executor._work_ready.notify()
-                    break
-            if executor._old_executor is None:
-                raise RuntimeError("CurrentThreadExecutor already quit or is broken")
-            executor = executor._old_executor
-
-        # Return the future
-        return f
+        pass
